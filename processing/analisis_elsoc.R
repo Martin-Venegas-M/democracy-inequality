@@ -1,12 +1,11 @@
-
 # 0. Identification -------------------------------------------------------
 
-#Title: Analysis code for a research paper on Democracy and Inequality
-#Institution: Centro de Estudios de Conflicto y Cohesión Social (COES)
-#Responsable: Researcher
+# Title: Analysis code for a research paper on Democracy and Inequality
+# Institution: Centro de Estudios de Conflicto y Cohesión Social (COES)
+# Responsable: Researcher
 
 # Executive Summary: This script contains the code to create the analysis code for Democracy and Inequality
-# Date: April 1, 2025
+# Date: April 21, 2025
 
 rm(list = ls())
 
@@ -29,28 +28,64 @@ source("processing/func_sint.R")
 
 # 3. Estimate RICLPM ------------------------------------------------------
 
-# Function for estimating multiple dependent variables for one dependent variable
-list_fits <- function(x, waves = c(1:7)) {
-  fits <- list(
-    fit1 = estimate_riclpm(text_riclpm(x, "c08_01", waves)),
-    fit2 = estimate_riclpm(text_riclpm(x, "c08_02", waves)),
-    fit3 = estimate_riclpm(text_riclpm(x, "c08_03", waves)),
-    fit4 = estimate_riclpm(text_riclpm(x, "c08_04", waves))
-  )
+get_waves <- function(x, y, data = elsoc) {
+  indep <- str_sub(names(data)[str_detect(names(data), x)], 10) %>% as.numeric()
+  dep <- str_sub(names(data)[str_detect(names(data), y)], 10) %>% as.numeric()
 
-  return(fits)
+  sort(intersect(indep, dep))
 }
 
-fits_c18_11 <- list_fits("c18_11", waves = c(1:4, 6:7))
+# Function for estimating multiple dependent variables for one independent variable
+
+v_c08 <- c(paste0("c08_0", rep(1:4)))
+v_c09 <- c(paste0("c09_0", rep(1:4)))
+
+list_fits <- function(x, dependents = NULL, data = elsoc) {
+  if (is.null(dependents)) {
+    message("INCORPORE ALGUNA VARIABLE DEPENDIENTE!")
+  } else {
+    purrr::map(
+      dependents,
+      ~ estimate_riclpm(text_riclpm(x, .x, get_waves(x, .x, data)))
+    ) %>%
+      set_names(paste0("fit", seq_along(dependents)))
+  }
+}
+
+fits_c18_11 <- list_fits("c18_11", c(v_c08, v_c09))
+fits_c18_12 <- list_fits("c18_12", v_c08)
+fits_d02_01 <- list_fits("d02_01", c(v_c08, v_c09))
+fits_d02_02 <- list_fits("d02_02", c(v_c08, v_c09))
+fits_d02_03 <- list_fits("d02_03", c(v_c08, v_c09))
 
 # 4. Create tabs for RICLPM -----------------------------------------------
 
-vector_vary <- c(paste0("c08_0", rep(1:4)))
+vector_vary <- c(v_c08, v_c09)
 
 tab_c18_11 <- bind_rows(map2(.x = fits_c18_11, .y = vector_vary, .f = ~ reg_sig(.x, "c18_11", .y)))
+tab_c18_12 <- bind_rows(map2(.x = fits_c18_12, .y = v_c08, .f = ~ reg_sig(.x, "c18_12", .y)))
+tab_d02_01 <- bind_rows(map2(.x = fits_d02_01, .y = vector_vary, .f = ~ reg_sig(.x, "d02_01", .y)))
+tab_d02_02 <- bind_rows(map2(.x = fits_d02_02, .y = vector_vary, .f = ~ reg_sig(.x, "d02_02", .y)))
+tab_d02_03 <- bind_rows(map2(.x = fits_d02_03, .y = vector_vary, .f = ~ reg_sig(.x, "d02_03", .y)))
 
 # 5. Excel with estimations ----------------------------------------------
 
+# relevant <- function(x) {
+#   x %>% filter(
+#     (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
+#     (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
+#   )
+
+# }
+
 write_xlsx(list(
-  "ACEPTACION DESIGUALDAD" = tab_c18_11
+  "ACEPTACION DESIGUALDAD" = tab_c18_11,
+  "HAY GRUPOS INFERIORES" = tab_c18_12,
+  "JUST DIST PENSIONES" = tab_d02_01,
+  "JUST DIST EDUC" = tab_d02_02,
+  "JUST DIST SALUD" = tab_d02_03
 ), "output/riclpm_democracy_inequality.xlsx")
+
+# Check
+
+get_waves("d02_03", "c08_02")

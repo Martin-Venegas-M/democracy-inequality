@@ -38,6 +38,7 @@ elsoc <- elsoc_wide_2016_2023 %>% dplyr::select(
   contains("c02"),
   contains("c08"),
   contains("c09"),
+  contains("d02"),
   #contains("r13"),
   contains("r15")
   ) %>% mutate(
