@@ -37,20 +37,92 @@ text_riclpm <- function(x, y, waves) {
   return(modelo)
 }
 
-# Example
-# test_riclpm <- text_riclpm("brecha_perc", "f05_03", c(1:7))
-# cat(modelo_riclpm)
+# (UPGRADE) Function for creating text object for lavaan ------------------------------------
+text_riclpm_v2 <- function(var_x, var_y, waves, inv_preds = NULL, constrain = FALSE) {
+    # Transform waves to character and format "01"
+    waves_chr <- sprintf("%02d", waves)
 
-# test <- sem(
-#   test_riclpm,
-#   data = elsoc,
-#   estimator = "MLR",
-#   missing = "FIML",
-#   meanstructure = T,
-#   int.ov.free = T
-# )
+    # Create vector with variable names
+    vx <- paste0(var_x, "_w", waves_chr) #? Here paste0() create the string by every element of the vector "waves_chr"
+    vy <- paste0(var_y, "_w", waves_chr) 
 
-# summary(test)
+    # Create string with between effects
+    ri_x <- paste("RI_x =~", paste0("1*", vx, collapse = " + ")) #? paste0() pastes "*1" to every element in the vector "waves_chr, separating by " + "...
+    ri_y <- paste("RI_y =~", paste0("1*", vy, collapse = " + ")) #? then, it pastes the corresponding RI at the beginning with paste()
+
+    # Create vector with within effects
+    cx <- paste0("cx", waves, " =~ 1*", vx)
+    cy <- paste0("cy", waves, " =~ 1*", vy)
+
+    # Constrain measurement error variances to zero
+    vx0 <- paste0(vx, " ~~ 0*", vx)
+    vy0 <- paste0(vy, " ~~ 0*", vy)
+
+    # Relaciones autoregresivas
+    waves_lag <- waves[-1] #? Remove firts wave 
+    waves_ant <- waves[-length(waves)] #? Return wave - 1 of the "waves_lag" vector
+
+    # Create regression
+    if (constrain) { # ? If constrianing is requiered...
+        coef_cx <- paste0(
+            "cx", waves_lag, " ~ ",
+            letters[1], "*cx", waves_ant, " + ",
+            letters[2], "*cy", waves_ant
+        )
+        coef_cy <- paste0(
+            "cy", waves_lag, " ~ ",
+            letters[6], "*cx", waves_ant, " + ",
+            letters[7], "*cy", waves_ant
+        )
+
+        if (!is.null(inv_preds)) {
+            for (i in seq_along(inv_preds)) {
+                coef_cx <- paste0(coef_cx, " + ", letters[2 + i], "*", inv_preds[i])
+                coef_cy <- paste0(coef_cy, " + ", letters[7 + i], "*", inv_preds[i])
+            }
+        }
+    } else { # ? At every other case...
+        coef_cx <- paste0(
+            "cx", waves_lag, " ~ ",
+            "cx", waves_ant, " + ",
+            "cy", waves_ant
+        )
+        coef_cy <- paste0(
+            "cy", waves_lag, " ~ ",
+            "cx", waves_ant, " + ",
+            "cy", waves_ant
+        )
+
+        if (!is.null(inv_preds)) {
+            inv_line <- paste(inv_preds, collapse = " + ")
+            coef_cx <- paste0(coef_cx, " + ", inv_line)
+            coef_cy <- paste0(coef_cy, " + ", inv_line)
+        }
+    }
+
+    # Covariances between residuals
+    covs <- paste0("cx", waves, " ~~ cy", waves)[-1]
+
+    # Covariances bewteen RI y RI
+    ri_covs <- c(
+        "RI_x ~~ RI_x", "RI_y ~~ RI_y", "RI_x ~~ RI_y",
+        "RI_x ~~ 0*cx1", "RI_x ~~ 0*cy1",
+        "RI_y ~~ 0*cx1", "RI_y ~~ 0*cy1"
+    )
+
+    # Resultado
+    model_lines <- c(
+        ri_x, ri_y,
+        cx, cy,
+        vx0, vy0,
+        coef_cx, coef_cy,
+        paste0("cx1 ~~ cy1"),
+        covs,
+        ri_covs
+    )
+
+    return(paste(model_lines, collapse = "\n"))
+}
 
 # Function for creating a table with significative regression effects -----------------------------------
 reg_sig <- function(fit, x, y) {

@@ -44,7 +44,6 @@ tab_gold_standard <- reg_sig(fit_gold_standard,"d02_03", "c08_02") %>%
 
 # 4. Replication ----------------------------------------------------------
 
-
 # writeLines(text_gold_standard)
 
 # Creating text object
@@ -130,7 +129,22 @@ tab_replication <- reg_sig(fit_replication,"d02_03", "c08_02") %>%
       (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
   )
 
-# 5. Add (basic) controls ------------------------------------------------------
+# 5. Test new function ---------------------------------------------------------
+
+# Creating text object
+text_new_function <- text_riclpm_v2("d02_03", "c08_02", c(1:4, 6:7))
+
+# Estimating model
+fit_new_function <- estimate_riclpm(text_new_function)
+
+# Create table
+tab_new_function <- reg_sig(fit_new_function,"d02_03", "c08_02") %>%
+  filter(
+    (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
+      (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
+  )
+
+# 6. Add (basic) controls ------------------------------------------------------
 
 text_controls <- "
 
@@ -210,9 +224,24 @@ tab_controls <- reg_sig(fit_controls,"d02_03", "c08_02") %>%
 # RESULTADO: CONTROLAR POR SEXO Y/O EDAD CONTROLAN EL EFECTO DE LA OLA 3 A LA 4
 # El efecto se mantiene incluso controlando por educación en la ola 1
 
-# 6. Add (basic) controls and constrain ------------------------------------------------------
+# 7. Add (basic) controls with new function --------------------------------------------------
 
-text_controls2 <- "
+# Creating text object
+text_new_function_controls <- text_riclpm_v2("d02_03", "c08_02", c(1:4, 6:7), c("m0_edad_w01", "m0_sexo_w01", "m01_w01"))
+
+# Estimating model
+fit_new_function_controls <- estimate_riclpm(text_new_function_controls)
+
+# Create table
+tab_new_function_controls <- reg_sig(fit_new_function_controls,"d02_03", "c08_02") %>%
+  filter(
+    (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
+      (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
+  )
+
+# 8. Add (basic) controls and constrain ------------------------------------------------------
+
+text_controls_constrained <- "
 
 RI_x =~ 1*d02_03_w01 + 1*d02_03_w02 + 1*d02_03_w03 + 1*d02_03_w04 + 1*d02_03_w06 + 1*d02_03_w07
 
@@ -278,13 +307,28 @@ RI_y ~~ 0*cy1
 "
 
 # Estimating model
-fit_controls2 <- estimate_riclpm(text_controls2)
+fit_controls_constrained <- estimate_riclpm(text_controls_constrained)
 
 # Creating tab
-tab_controls2 <- reg_sig(fit_controls2,"d02_03", "c08_02") %>%
+tab_controls_constrained <- reg_sig(fit_controls_constrained,"d02_03", "c08_02") %>%
   filter(
     (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
       (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
   )
 
 # RESULTADO: NO HAY RESULTADOS CONSTRIÑENDO POR TIEMPO
+
+# 9. Add (basic) controls and constrain with new function ------------------------------------
+
+# Creating text object
+text_new_function_controls_constrained <- text_riclpm_v2("d02_03", "c08_02", c(1:4, 6:7), c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = T)
+
+# Estimating model
+fit_new_function_controls_constrained <- estimate_riclpm(text_new_function_controls_constrained)
+
+# Create table
+tab_new_function_controls_constrained <- reg_sig(fit_new_function_controls_constrained,"d02_03", "c08_02") %>%
+  filter(
+    (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
+      (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
+  )
