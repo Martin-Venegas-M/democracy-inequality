@@ -332,3 +332,40 @@ tab_new_function_controls_constrained <- reg_sig(fit_new_function_controls_const
     (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
       (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
   )
+
+# 10. Moderarion ------------------------------------------------------------------------------
+
+# Estimating model
+fit_moderation <- sem(
+  text_riclpm_v2("d02_03", "c08_02", c(1:4, 6:7), c("m0_edad_w01", "m01_w01")),
+  data = elsoc,
+  estimator = "MLR",
+  missing = "FIML",
+  meanstructure = T,
+  int.ov.free = T,
+  group = "m0_sexo_w01"
+)
+
+summary(fit_moderation, fit.measures = TRUE)
+
+# 11. Parcelled analysis ---------------------------------------------------------------------
+
+tab_parcelled1 <- reg_sig(
+  estimate_riclpm(text_riclpm_v2("d02_03", "c08_02", c(1:4), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
+  "d02_03", 
+  "c08_02"
+  ) %>%
+  filter(
+    (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
+      (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
+  )
+
+tab_parcelled2 <- reg_sig(
+  estimate_riclpm(text_riclpm_v2("d02_03", "c08_02", c(3, 4, 6, 7), inv_preds = c("m0_edad_w03", "m0_sexo_w03", "m01_w03"), constrain = FALSE)),
+  "d02_03", 
+  "c08_02"
+  ) %>%
+  filter(
+    (str_starts(lhs, "cx") & str_starts(rhs, "cy")) |
+      (str_starts(lhs, "cy") & str_starts(rhs, "cx"))
+  )
