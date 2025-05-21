@@ -46,14 +46,14 @@ list_fits <- function(x, dependents = NULL, data = elsoc) {
   } else {
     purrr::map(
       dependents,
-      ~ estimate_riclpm(text_riclpm_v2(x, .x, get_waves(x, .x, data), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01")))
+      ~ estimate_riclpm(text_riclpm_v2(x, .x, get_waves(x, .x, data), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
     ) %>%
       set_names(paste0("fit", seq_along(dependents)))
   }
 }
 
 fits_c18_11 <- list_fits("c18_11", c(v_c08, v_c09))
-# fits_c18_12 <- list_fits("c18_12", v_c08)
+fits_c18_12 <- list_fits("c18_12", v_c08)
 fits_d02_01 <- list_fits("d02_01", c(v_c08, v_c09))
 fits_d02_02 <- list_fits("d02_02", c(v_c08, v_c09))
 fits_d02_03 <- list_fits("d02_03", c(v_c08, v_c09))
@@ -63,7 +63,7 @@ fits_d02_03 <- list_fits("d02_03", c(v_c08, v_c09))
 vector_vary <- c(v_c08, v_c09)
 
 tab_c18_11 <- bind_rows(map2(.x = fits_c18_11, .y = vector_vary, .f = ~ reg_sig(.x, "c18_11", .y)))
-# tab_c18_12 <- bind_rows(map2(.x = fits_c18_12, .y = v_c08, .f = ~ reg_sig(.x, "c18_12", .y)))
+tab_c18_12 <- bind_rows(map2(.x = fits_c18_12, .y = v_c08, .f = ~ reg_sig(.x, "c18_12", .y)))
 tab_d02_01 <- bind_rows(map2(.x = fits_d02_01, .y = vector_vary, .f = ~ reg_sig(.x, "d02_01", .y)))
 tab_d02_02 <- bind_rows(map2(.x = fits_d02_02, .y = vector_vary, .f = ~ reg_sig(.x, "d02_02", .y)))
 tab_d02_03 <- bind_rows(map2(.x = fits_d02_03, .y = vector_vary, .f = ~ reg_sig(.x, "d02_03", .y)))
@@ -80,11 +80,11 @@ tab_d02_03 <- bind_rows(map2(.x = fits_d02_03, .y = vector_vary, .f = ~ reg_sig(
 
 write_xlsx(list(
   "ACEPTACION DESIGUALDAD" = tab_c18_11,
-  #"HAY GRUPOS INFERIORES" = tab_c18_12,
+  "HAY GRUPOS INFERIORES" = tab_c18_12,
   "JUST DIST PENSIONES" = tab_d02_01,
   "JUST DIST EDUC" = tab_d02_02,
   "JUST DIST SALUD" = tab_d02_03
-), "output/riclpm_democracy_inequality_controls.xlsx")
+), "output/riclpm_democracy_inequality_controls_constrained.xlsx")
 
 # Check
 
