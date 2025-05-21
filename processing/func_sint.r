@@ -101,13 +101,19 @@ text_riclpm_v2 <- function(var_x, var_y, waves, inv_preds = NULL, constrain = FA
     }
 
     # Covariances between residuals
-    covs <- paste0("cx", waves, " ~~ cy", waves)[-1]
+    covs <- paste0("cx", waves, " ~~ cy", waves)
 
     # Covariances bewteen RI y RI
+    first_wave <- waves[1]
+
     ri_covs <- c(
-        "RI_x ~~ RI_x", "RI_y ~~ RI_y", "RI_x ~~ RI_y",
-        "RI_x ~~ 0*cx1", "RI_x ~~ 0*cy1",
-        "RI_y ~~ 0*cx1", "RI_y ~~ 0*cy1"
+        "RI_x ~~ RI_x", 
+        "RI_y ~~ RI_y", 
+        "RI_x ~~ RI_y",
+        paste0("RI_x ~~ 0*cx", first_wave), 
+        paste0("RI_x ~~ 0*cy", first_wave),
+        paste0("RI_y ~~ 0*cx", first_wave), 
+        paste0("RI_y ~~ 0*cy", first_wave)
     )
 
     # Resultado
@@ -116,7 +122,6 @@ text_riclpm_v2 <- function(var_x, var_y, waves, inv_preds = NULL, constrain = FA
         cx, cy,
         vx0, vy0,
         coef_cx, coef_cy,
-        paste0("cx1 ~~ cy1"),
         covs,
         ri_covs
     )
